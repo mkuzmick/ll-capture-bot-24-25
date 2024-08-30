@@ -5,6 +5,7 @@ const llog = require("learninglab-log");
 // const { getConfig } = require('./src/bots/config')
 global.ROOT_DIR = path.resolve(__dirname);
 const handleMessages = require("./src/bot/handlers/handle-messages");
+const hijackWatcher = require("./src/bot/hijack-watcher")
 
 require("dotenv").config({
   path: path.resolve(__dirname, `.env.${process.env.NODE_ENV}`),
@@ -78,5 +79,9 @@ app.message(/.*/, handleMessages.parseAll);
   let slackResult = await app.client.chat.postMessage({
     channel: process.env.SLACK_LOGGING_CHANNEL,
     text: "starting up the capture bot",
+  });
+  hijackWatcher({
+    watchFolder: process.env.HIJACK_WATCH_FOLDER,
+    archiveFolder: process.env.HIJACK_ARCHIVE_FOLDER,
   });
 })();
