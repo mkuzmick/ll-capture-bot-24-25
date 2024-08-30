@@ -5,6 +5,8 @@ const OpenAI = require("openai");
 const path = require("path");
 const ffmpeg = require("fluent-ffmpeg");
 const { App } = require("@slack/bolt");
+const Replicate = require("replicate");
+const axios = require('axios');
 
 // const extractUsername = (filePath) => {
 //   const fileName = path.basename(filePath, path.extname(filePath)); // Extract the file name without extension
@@ -30,6 +32,8 @@ const extractUsername = (filePath) => {
 
 
 const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
+
+
   llog.green(`watchFolder: ${watchFolder}`);
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -134,67 +138,198 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
         const ts = result.ts; // Get the timestamp of the posted message
 
 
+        
+        
+       
+
+        const imagePromptResponse = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+              { role: "system", content: "You are a helpful assistant." },
+              { role: "user", content: `Please give me a prompt for stable diffusion that would be the best hero image for the following conversation transcript:\n\n"${transcription.text}". Please return ONLY THE PROMPT-nothing else` }
+          ],
+          max_tokens: 200,
+        });
+
+        const thePrompt = imagePromptResponse.choices[0].message.content.trim();
+
+        const replicate = new Replicate({
+          auth: process.env.REPLICATE_API_TOKEN,
+        });
+
+        const input = {
+          prompt: thePrompt,
+          num_outputs: 1,
+          aspect_ratio: "1:1",
+          output_format: "webp",
+          output_quality: 80
+        };
+
+        const output = await replicate.run("black-forest-labs/flux-schnell", { input });
+        console.log(output);
 
 
-        // Request a German translation from OpenAI
-const translationResponse1 = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-      { role: "system", content: "You are a helpful assistant who translates text to German." },
-      { role: "user", content: `Translate the following text to German:\n\n"${transcription.text}"` }
-  ],
-  max_tokens: 1000,
-});
+        const timestamp = Date.now();
+        const filename = `replicate_${timestamp}.webp`;
+        const tempDir = path.join(global.ROOT_DIR, '_temp');
+        const imagePath = path.join(tempDir, filename);
 
-const germanTranslation = translationResponse1.choices[0].message.content.trim();
+// Ensure the _temp directory exists
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
 
-// Post the German translation as a thread reply
-await app.client.chat.postMessage({
-  channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-  text: germanTranslation,
-  thread_ts: ts,
-  username: "Lukas"
-});
 
-// Request a French translation from OpenAI
-const translationResponse2 = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-      { role: "system", content: "You are a helpful assistant who translates text to French." },
-      { role: "user", content: `Translate the following text to French:\n\n"${transcription.text}"` }
-  ],
-  max_tokens: 1000,
-});
+        // Download the image using Axios
+        const imageUrl = output[0];  // Assuming the first output URL is the image
+        const response = await axios({
+            url: imageUrl,
+            method: 'GET',
+            responseType: 'arraybuffer',  // Ensure the response is in binary form
+        });
 
-const frenchTranslation = translationResponse2.choices[0].message.content.trim();
+        // Save the image to a file
+        fs.writeFileSync(imagePath, response.data);
 
-// Post the French translation as a thread reply
-await app.client.chat.postMessage({
-  channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-  text: frenchTranslation,
-  thread_ts: ts,
-  username: "Élodie"
-});
+        console.log(`Image downloaded and saved to ${imagePath}`);
 
-// Request a Spanish translation from OpenAI
-const translationResponse3 = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-      { role: "system", content: "You are a helpful assistant who translates text to Spanish." },
-      { role: "user", content: `Translate the following text to Spanish:\n\n"${transcription.text}"` }
-  ],
-  max_tokens: 1000,
-});
+        const fileSizeInBytes = fs.statSync(imagePath).size;
 
-const spanishTranslation = translationResponse3.choices[0].message.content.trim();
 
-// Post the Spanish translation as a thread reply
-await app.client.chat.postMessage({
-  channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-  text: spanishTranslation,
-  thread_ts: ts,
-  username: "Carlos"
-});
+                
+
+                // Step 1: Get the upload URL
+        const uploadUrlResponse = await app.client.files.getUploadURLExternal({
+          channels: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+          filename: filename,
+          thread_ts: ts,
+          length: fileSizeInBytes
+        });
+
+        if (!uploadUrlResponse.ok) {
+          console.error("Failed to get upload URL:", uploadUrlResponse.error);
+          return;
+        }
+
+        console.log("Upload URL obtained successfully:", uploadUrlResponse);
+
+        const uploadUrl = uploadUrlResponse.upload_url;
+        const file_id = uploadUrlResponse.file_id;
+
+        const fileStream = fs.createReadStream(imagePath);
+        // Step 2: Upload the file content to the URL
+        await axios.post(uploadUrl, fileStream, {
+          headers: {
+              'Content-Type': 'image/webp', // Adjust the content type based on the file type
+              'Content-Length': fileSizeInBytes  // Include the file size in bytes
+          },
+      });
+      
+
+        console.log("Image content uploaded successfully to Slack's server.");
+
+        // Step 3: Complete the upload process
+        
+
+        const completeUploadResponse = await app.client.files.completeUploadExternal({
+          files: [
+              {
+                  id: file_id,
+                  title: "Generated Image"
+              }
+          ],
+          initial_comment: "I've created this image for you",
+          channel_id: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+          thread_ts: ts,
+          // Ensure that the file is shared in the channel
+          channels: [process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL]
+      });
+
+      
+
+
+        if (!completeUploadResponse.ok) {
+          console.error("Failed to complete file upload:", completeUploadResponse.error);
+          return;
+        }
+
+        console.log("Image upload completed successfully:", completeUploadResponse);
+
+        // Step 4: Log file information to verify its existence
+        const fileInfoResponse = await app.client.files.info({
+          file: file_id
+        });
+
+        if (!fileInfoResponse.ok) {
+          console.error("Failed to retrieve file info:", fileInfoResponse.error);
+          return;
+        }
+
+        console.log("Retrieved file info:", fileInfoResponse);
+
+
+
+
+
+                // Request a German translation from OpenAI
+        const translationResponse1 = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+              { role: "system", content: "You are a helpful assistant who translates text to German." },
+              { role: "user", content: `Translate the following text to German:\n\n"${transcription.text}"` }
+          ],
+          max_tokens: 1000,
+        });
+
+        const germanTranslation = translationResponse1.choices[0].message.content.trim();
+
+        // Post the German translation as a thread reply
+        await app.client.chat.postMessage({
+          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+          text: germanTranslation,
+          thread_ts: ts,
+          username: "Lukas"
+        });
+
+        // Request a French translation from OpenAI
+        const translationResponse2 = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+              { role: "system", content: "You are a helpful assistant who translates text to French." },
+              { role: "user", content: `Translate the following text to French:\n\n"${transcription.text}"` }
+          ],
+          max_tokens: 1000,
+        });
+
+        const frenchTranslation = translationResponse2.choices[0].message.content.trim();
+
+        // Post the French translation as a thread reply
+        await app.client.chat.postMessage({
+          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+          text: frenchTranslation,
+          thread_ts: ts,
+          username: "Élodie"
+        });
+
+        // Request a Spanish translation from OpenAI
+        const translationResponse3 = await openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+              { role: "system", content: "You are a helpful assistant who translates text to Spanish." },
+              { role: "user", content: `Translate the following text to Spanish:\n\n"${transcription.text}"` }
+          ],
+          max_tokens: 1000,
+        });
+
+        const spanishTranslation = translationResponse3.choices[0].message.content.trim();
+
+        // Post the Spanish translation as a thread reply
+        await app.client.chat.postMessage({
+          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+          text: spanishTranslation,
+          thread_ts: ts,
+          username: "Carlos"
+        });
 
 // Request a Mandarin Chinese translation from OpenAI
 const translationResponse4 = await openai.chat.completions.create({
@@ -234,6 +369,8 @@ await app.client.chat.postMessage({
   thread_ts: ts,
   username: "The CompLit Critic"
 });
+
+
 
 
 
