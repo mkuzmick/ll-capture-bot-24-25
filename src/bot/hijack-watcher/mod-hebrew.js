@@ -4,21 +4,10 @@ const fs = require("fs");
 const OpenAI = require("openai");
 const path = require("path");
 const ffmpeg = require("fluent-ffmpeg");
-const { App } = require("@slack/bolt");
 const Replicate = require("replicate");
 const axios = require('axios');
 const customConfig = require('../../custom/mod-hebrew');
 
-
-// const extractUsername = (filePath) => {
-//   const fileName = path.basename(filePath, path.extname(filePath)); // Extract the file name without extension
-//   const parts = fileName.split("_");
-//   if (parts.length >= 2) {
-//     return `${parts[0]}_${parts[1]}`;
-//   } else {
-//     return fileName;
-//   }
-// };
 
 const extractUsername = (filePath) => {
   const fileName = path.basename(filePath, path.extname(filePath)); // Extract the file name without extension
@@ -32,29 +21,13 @@ const extractUsername = (filePath) => {
 };
 
 
-
-const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
-
+const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
 
   llog.green(`watchFolder: ${watchFolder}`);
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
-  // Initialize Slack app
-  const app = new App({
-    token: process.env.SLACK_BOT_TOKEN,
-    signingSecret: process.env.SLACK_SIGNING_SECRET,
-    socketMode: true,
-    appToken: process.env.SLACK_APP_TOKEN,
-    port: process.env.PORT || 3000,
-  });
-
-  // Start the app
-  (async () => {
-    await app.start();
-    console.log("⚡️ Slack app is running!");
-  })();
 
   var watcher = chokidar.watch(watchFolder, {
     ignored: /\.DS_Store/,
@@ -129,7 +102,7 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
         const username = extractUsername(filePath);
         llog.blue(username)
         // Send transcription to Slack
-        const result = await app.client.chat.postMessage({
+        const result = await client.chat.postMessage({
           channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
           text: `${transcription.text}`,
           username: username,
@@ -137,7 +110,7 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
 
 
 
-          
+
 
         const ts = result.ts; // Get the timestamp of the posted message
 
@@ -149,7 +122,7 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
           model: "gpt-4",
           messages: [
               { role: "system", content: "You are a helpful assistant." },
-              { role: "user", content: `Please give me a prompt for stable diffusion that would be the best hero image for the following conversation transcript:\n\n"${transcription.text}". Please return ONLY THE PROMPT-nothing else` }
+              { role: "user", content: `Please give me a prompt that I could use to generate the best possible image for a film trailer that contains dialogue such as the following:\n\n"${transcription.text}". Please return ONLY THE PROMPT-nothing else` }
           ],
           max_tokens: 200,
         });
@@ -163,7 +136,7 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
         const input = {
           prompt: thePrompt,
           num_outputs: 1,
-          aspect_ratio: "1:1",
+          aspect_ratio: "16:9",
           output_format: "webp",
           output_quality: 80
         };
@@ -202,7 +175,7 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
                 
 
                 // Step 1: Get the upload URL
-        const uploadUrlResponse = await app.client.files.getUploadURLExternal({
+        const uploadUrlResponse = await client.files.getUploadURLExternal({
           channels: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
           filename: filename,
           thread_ts: ts,
@@ -234,7 +207,7 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
         // Step 3: Complete the upload process
         
 
-        const completeUploadResponse = await app.client.files.completeUploadExternal({
+        const completeUploadResponse = await client.files.completeUploadExternal({
           files: [
               {
                   id: file_id,
@@ -259,7 +232,7 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
         console.log("Image upload completed successfully:", completeUploadResponse);
 
         // Step 4: Log file information to verify its existence
-        const fileInfoResponse = await app.client.files.info({
+        const fileInfoResponse = await client.files.info({
           file: file_id
         });
 
@@ -278,100 +251,99 @@ const hijackWatcher = async ({ watchFolder, archiveFolder }) => {
         const translationResponse1 = await openai.chat.completions.create({
           model: "gpt-4",
           messages: [
-              { role: "system", content: "You are a helpful assistant who translates text to German." },
-              { role: "user", content: `Translate the following text to German:\n\n"${transcription.text}"` }
+              { role: "system", content: "You are a helpful assistant who translates text from English to modern Hebrew." },
+              { role: "user", content: `Translate the following text to modern Hebrew:\n\n"${transcription.text}"` }
           ],
           max_tokens: 1000,
         });
 
-        const germanTranslation = translationResponse1.choices[0].message.content.trim();
+        const hebrewTranslation = translationResponse1.choices[0].message.content.trim();
 
-        // Post the German translation as a thread reply
-        await app.client.chat.postMessage({
+        await client.chat.postMessage({
           channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-          text: germanTranslation,
+          text: hebrewTranslation,
           thread_ts: ts,
-          username: "Lukas"
+          username: "English to Hebrew Bot"
         });
 
         // Request a French translation from OpenAI
         const translationResponse2 = await openai.chat.completions.create({
           model: "gpt-4",
           messages: [
-              { role: "system", content: "You are a helpful assistant who translates text to French." },
-              { role: "user", content: `Translate the following text to French:\n\n"${transcription.text}"` }
+              { role: "system", content: "You are a helpful assistant who translates text to English from Modern Hebrew." },
+              { role: "user", content: `Translate the following text to English:\n\n"${transcription.text}"` }
           ],
           max_tokens: 1000,
         });
 
-        const frenchTranslation = translationResponse2.choices[0].message.content.trim();
+        const englishTranslation = translationResponse2.choices[0].message.content.trim();
 
         // Post the French translation as a thread reply
-        await app.client.chat.postMessage({
+        await client.chat.postMessage({
           channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-          text: frenchTranslation,
+          text: englishTranslation,
           thread_ts: ts,
-          username: "Élodie"
+          username: "Hebrew to English Bot"
         });
 
-        // Request a Spanish translation from OpenAI
-        const translationResponse3 = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-              { role: "system", content: "You are a helpful assistant who translates text to Spanish." },
-              { role: "user", content: `Translate the following text to Spanish:\n\n"${transcription.text}"` }
-          ],
-          max_tokens: 1000,
-        });
+//         // Request a Spanish translation from OpenAI
+//         const translationResponse3 = await openai.chat.completions.create({
+//           model: "gpt-4",
+//           messages: [
+//               { role: "system", content: "You are a helpful assistant who translates text to Spanish." },
+//               { role: "user", content: `Translate the following text to Spanish:\n\n"${transcription.text}"` }
+//           ],
+//           max_tokens: 1000,
+//         });
 
-        const spanishTranslation = translationResponse3.choices[0].message.content.trim();
+//         const spanishTranslation = translationResponse3.choices[0].message.content.trim();
 
-        // Post the Spanish translation as a thread reply
-        await app.client.chat.postMessage({
-          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-          text: spanishTranslation,
-          thread_ts: ts,
-          username: "Carlos"
-        });
+//         // Post the Spanish translation as a thread reply
+//         await client.chat.postMessage({
+//           channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+//           text: spanishTranslation,
+//           thread_ts: ts,
+//           username: "Carlos"
+//         });
 
-// Request a Mandarin Chinese translation from OpenAI
-const translationResponse4 = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-      { role: "system", content: "You are a helpful assistant who translates text to Mandarin Chinese." },
-      { role: "user", content: `Translate the following text to Mandarin Chinese:\n\n"${transcription.text}"` }
-  ],
-  max_tokens: 1000,
-});
+// // Request a Mandarin Chinese translation from OpenAI
+// const translationResponse4 = await openai.chat.completions.create({
+//   model: "gpt-4",
+//   messages: [
+//       { role: "system", content: "You are a helpful assistant who translates text to Mandarin Chinese." },
+//       { role: "user", content: `Translate the following text to Mandarin Chinese:\n\n"${transcription.text}"` }
+//   ],
+//   max_tokens: 1000,
+// });
 
-const mandarinTranslation = translationResponse4.choices[0].message.content.trim();
+// const mandarinTranslation = translationResponse4.choices[0].message.content.trim();
 
-// Post the Mandarin Chinese translation as a thread reply
-await app.client.chat.postMessage({
-  channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-  text: mandarinTranslation,
-  thread_ts: ts,
-  username: "Mei"
-});
+// // Post the Mandarin Chinese translation as a thread reply
+// await client.chat.postMessage({
+//   channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+//   text: mandarinTranslation,
+//   thread_ts: ts,
+//   username: "Mei"
+// });
 
-const translationResponse5 = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-      { role: "system", content: "You are a Comparative Literature graduate student who is steeped in literary and cultural theory and is extremely intelligent. You are critical of poor translations." },
-      { role: "user", content: `please evaluate the following translations of the English text and give a few specific critiques of unusual choices--or praise good choices:\noriginal:\n"${transcription.text}"\ntranslations: ${frenchTranslation} \n${germanTranslation} \n${spanishTranslation} \n${mandarinTranslation} \n` }
-  ],
-  max_tokens: 1000,
-});
+// const translationResponse5 = await openai.chat.completions.create({
+//   model: "gpt-4",
+//   messages: [
+//       { role: "system", content: "You are a Comparative Literature graduate student who is steeped in literary and cultural theory and is extremely intelligent. You are critical of poor translations." },
+//       { role: "user", content: `please evaluate the following translations of the English text and give a few specific critiques of unusual choices--or praise good choices:\noriginal:\n"${transcription.text}"\ntranslations: ${frenchTranslation} \n${germanTranslation} \n${spanishTranslation} \n${mandarinTranslation} \n` }
+//   ],
+//   max_tokens: 1000,
+// });
 
-const evaluation = translationResponse5.choices[0].message.content.trim();
+// const evaluation = translationResponse5.choices[0].message.content.trim();
 
-// Post the Mandarin Chinese translation as a thread reply
-await app.client.chat.postMessage({
-  channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-  text: evaluation,
-  thread_ts: ts,
-  username: "The CompLit Critic"
-});
+// // Post the Mandarin Chinese translation as a thread reply
+// await client.chat.postMessage({
+//   channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
+//   text: evaluation,
+//   thread_ts: ts,
+//   username: "The CompLit Critic"
+// });
 
 
 
