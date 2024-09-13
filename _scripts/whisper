@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+  echo "Error: jq is not installed."
+  echo "Please install jq to parse the JSON response."
+  echo "For macOS (with Homebrew): brew install jq"
+  echo "For Ubuntu/Debian: sudo apt-get install jq"
+  echo "For Fedora/CentOS: sudo dnf install jq"
+  exit 1
+fi
+
+# Check if ffmpeg is installed
+if ! command -v ffmpeg &> /dev/null; then
+  echo "Error: ffmpeg is not installed."
+  echo "Please install ffmpeg for audio processing."
+  echo "For macOS (with Homebrew): brew install ffmpeg"
+  echo "For Ubuntu/Debian: sudo apt-get install ffmpeg"
+  echo "For Fedora/CentOS: sudo dnf install ffmpeg"
+  exit 1
+fi
+
+# Check if OPENAI_API_KEY is set
+if [ -z "$OPENAI_API_KEY" ]; then
+  echo "Error: OPENAI_API_KEY is not set."
+  echo "Please set it in your .zshrc or equivalent shell config file."
+  echo "For example, add the following line to your .zshrc:"
+  echo 'export OPENAI_API_KEY="your_api_key_here"'
+  exit 1
+fi
+
+# Check if a file was passed as an argument
+if [ -z "$1" ]; then
+  echo "Usage: $0 <audio-file>"
+  exit 1
+fi
+
+# Get the file path and extension
+input_file="$1"
+output_file="${input_file%.*}.txt"
+
+# Check if the input file exists
+if [ ! -f "$input_file" ]; then
+  echo "Error: File '$input_file' not found!"
+  exit 1
+fi
+
+# Check the file size (in bytes), 25 MB is 26214400 bytes (macOS stat version)
+file_size=$(stat -f%z "$input_file")
+max_size=26214400
+
+# If file is larger than 25 MB, split it using ffmpeg
+if [ "$file_size" -gt "$max_size" ]; then
+  echo "File is larger than 25 MB, splitting into smaller chunks..."
+
+  # Split the file into 25MB chunks (ffmpeg time-based split)
+  duration=$(ffmpeg -i "$input_file" 2>&1 | grep Duration | awk '{print $2}' | tr -d ,)
+  echo "Duration: $duration"
+  
+  # Calculate the split interval (in seconds, rough estimate based on file size)
+  chunk_time=$(echo "scale=0; ($duration * $max_size) / $file_size" | bc)
+
+  ffmpeg -i "$input_file" -f segment -segment_time "$chunk_time" -c copy "${input_file%.*}_part_%03d.${input_file##*.}"
+
+  echo "Audio has been split into smaller chunks."
+
+  # Now process each chunk with Whisper API
+  for chunk in ${input_file%.*}_part_*.${input_file##*.}; do
+    chunk_output="${chunk%.*}.txt"
+    
+    # Send each chunk to the Whisper API for transcription
+    response=$(curl --silent --request POST \
+      --url https://api.openai.com/v1/audio/transcriptions \
+      --header "Authorization: Bearer $OPENAI_API_KEY" \
+      --header 'Content-Type: multipart/form-data' \
+      --form file=@"$chunk" \
+      --form model=whisper-1)
+
+    # Check if the response contains a transcription or an error
+    if echo "$response" | grep -q 'error'; then
+      echo "Error in API request for chunk $chunk: $response"
+      exit 1
+    fi
+
+    # Save the transcription to a .txt file
+    echo "$response" | jq -r '.text' > "$chunk_output"
+    echo "Transcription for $chunk saved to $chunk_output"
+  done
+
+  # Combine all chunk transcriptions into a single file
+  cat ${input_file%.*}_part_*.txt > "$output_file"
+  echo "All transcriptions combined into $output_file"
+
+else
+  # Send the audio file to the Whisper API for transcription if under 25 MB
+  response=$(curl --silent --request POST \
+    --url https://api.openai.com/v1/audio/transcriptions \
+    --header "Authorization: Bearer $OPENAI_API_KEY" \
+    --header 'Content-Type: multipart/form-data' \
+    --form file=@"$input_file" \
+    --form model=whisper-1)
+
+  # Check if the response contains a transcription or an error
+  if echo "$response" | grep -q 'error'; then
+    echo "Error in API request: $response"
+    exit 1
+  fi
+
+  # Save the transcription to a .txt file
+  echo "$response" | jq -r '.text' > "$output_file"
+  echo "Transcription saved to $output_file"
+fi
