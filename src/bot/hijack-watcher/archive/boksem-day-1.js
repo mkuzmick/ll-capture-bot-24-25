@@ -148,7 +148,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
         const input = {
           prompt: thePrompt,
           num_outputs: 1,
-          aspect_ratio: "1:1",
+          aspect_ratio: "16:9",
           output_format: "webp",
           output_quality: 80
         };
@@ -257,106 +257,25 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
 
 
 
-
-
-                // Request a German translation from OpenAI
-        const translationResponse1 = await openai.chat.completions.create({
+        const annotationResponse = await openai.chat.completions.create({
           model: "gpt-4",
           messages: [
-              { role: "system", content: "You are a helpful assistant who translates text to German." },
-              { role: "user", content: `Translate the following text to German:\n\n"${transcription.text}"` }
+              { role: "system", content: "You are a helpful assistant who helps people learn about AI, Teaching and Learning in a Higher Education context." },
+              { role: "user", content: `Please provide helpful commentary on the following text by unpacking any unusual jargon or complicated ideas or peculiar literary allusions, etc., and by providing thoughts on next steps in the chain of thought:\n\n"${transcription.text}"` }
           ],
           max_tokens: 1000,
         });
 
-        const germanTranslation = translationResponse1.choices[0].message.content.trim();
+        const annotationText = annotationResponse.choices[0].message.content.trim();
 
         // Post the German translation as a thread reply
         await client.chat.postMessage({
           channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-          text: germanTranslation,
+          text: annotationText,
           thread_ts: ts,
-          username: "Lukas"
+          username: "Annotation Bot"
         });
 
-        // Request a French translation from OpenAI
-        const translationResponse2 = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-              { role: "system", content: "You are a helpful assistant who translates text to French." },
-              { role: "user", content: `Translate the following text to French:\n\n"${transcription.text}"` }
-          ],
-          max_tokens: 1000,
-        });
-
-        const frenchTranslation = translationResponse2.choices[0].message.content.trim();
-
-        // Post the French translation as a thread reply
-        await client.chat.postMessage({
-          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-          text: frenchTranslation,
-          thread_ts: ts,
-          username: "Élodie"
-        });
-
-        // Request a Spanish translation from OpenAI
-        const translationResponse3 = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-              { role: "system", content: "You are a helpful assistant who translates text to Spanish." },
-              { role: "user", content: `Translate the following text to Spanish:\n\n"${transcription.text}"` }
-          ],
-          max_tokens: 1000,
-        });
-
-        const spanishTranslation = translationResponse3.choices[0].message.content.trim();
-
-        // Post the Spanish translation as a thread reply
-        await client.chat.postMessage({
-          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-          text: spanishTranslation,
-          thread_ts: ts,
-          username: "Carlos"
-        });
-
-// Request a Mandarin Chinese translation from OpenAI
-const translationResponse4 = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-      { role: "system", content: "You are a helpful assistant who translates text to Mandarin Chinese." },
-      { role: "user", content: `Translate the following text to Mandarin Chinese:\n\n"${transcription.text}"` }
-  ],
-  max_tokens: 1000,
-});
-
-const mandarinTranslation = translationResponse4.choices[0].message.content.trim();
-
-// Post the Mandarin Chinese translation as a thread reply
-await client.chat.postMessage({
-  channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-  text: mandarinTranslation,
-  thread_ts: ts,
-  username: "Mei"
-});
-
-const translationResponse5 = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-      { role: "system", content: "You are a Comparative Literature graduate student who is steeped in literary and cultural theory and is extremely intelligent. You are critical of poor translations." },
-      { role: "user", content: `please evaluate the following translations of the English text and give a few specific critiques of unusual choices--or praise good choices:\noriginal:\n"${transcription.text}"\ntranslations: ${frenchTranslation} \n${germanTranslation} \n${spanishTranslation} \n${mandarinTranslation} \n` }
-  ],
-  max_tokens: 1000,
-});
-
-const evaluation = translationResponse5.choices[0].message.content.trim();
-
-// Post the Mandarin Chinese translation as a thread reply
-await client.chat.postMessage({
-  channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
-  text: evaluation,
-  thread_ts: ts,
-  username: "The CompLit Critic"
-});
 
 
 
