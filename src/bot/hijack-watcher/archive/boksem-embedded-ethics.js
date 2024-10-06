@@ -7,47 +7,21 @@ const ffmpeg = require("fluent-ffmpeg");
 const { App } = require("@slack/bolt");
 const Replicate = require("replicate");
 const axios = require('axios');
-// const customConfig = require('../../custom/mod-hebrew');
+const customConfig = require('../../custom/mod-hebrew');
 
-const customConfig = {
-  scenes: [
-    {
-      name: "control room",
-      channel: "C07QLJSM81G",
-      track: "a8k_03"
-    },
-    {
-      name: "main table",
-      channel: "C07LRH22JGN",
-      track: "a8k_01"
-    },
-    {
-      name: "small studio",
-      channel: "C07R9CSJNG0",
-      track: "a8k_11"
-    },
-    {
-      name: "default",
-      channel: "C07K2TEFQFP",
-      track: "a8k_11"
-    },
-  ]
-};
 
-const handleFile = (filePath) => {
+
+const extractUsername = (filePath) => {
   const fileName = path.basename(filePath, path.extname(filePath)); // Extract the file name without extension
-
-  const matchingScene = customConfig.scenes.find(scene => fileName.includes(scene.track));
-
-  if (matchingScene) {
-    llog.magenta(`Sending ${fileName} to Slack channel: ${matchingScene.channel} (Scene: ${matchingScene.name})`);
-    // Here you would send the message to Slack using the bot
-    return matchingScene;
+  const parts = fileName.split("_");
+  if (parts.length >= 2) {
+    llog.magenta(`heard from ${parts[0]}_${parts[1]}`);
+    return `${parts[0]}_${parts[1]}`;
   } else {
-    llog.red(`No matching scene found for ${fileName}`);
-    return false;
+    return fileName;
   }
 };
+
 
 
 const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
@@ -128,27 +102,13 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
         );
         fs.writeFileSync(transcriptionTxtPath, transcription.text);
 
-
-        const scene = handleFile(filePath);
-
-
-        if (!scene) {
-          llog.red("No matching scene found. Exiting.");
-          return;
-        }
-
-        llog.blue(scene)
+        const username = extractUsername(filePath);
+        llog.blue(username)
         // Send transcription to Slack
-
-        // if (scene) {
-
-
-        // }
-
         const result = await client.chat.postMessage({
-          channel: scene.channel,
+          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
           text: `${transcription.text}`,
-          username: scene.name,
+          username: username,
         });
 
 
@@ -219,7 +179,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
 
                 // Step 1: Get the upload URL
         const uploadUrlResponse = await client.files.getUploadURLExternal({
-          channels: scene.channel,
+          channels: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
           filename: filename,
           thread_ts: ts,
           length: fileSizeInBytes
@@ -258,10 +218,10 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
               }
           ],
           initial_comment: "I've created this image for you",
-          channel_id: scene.channel,
+          channel_id: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
           thread_ts: ts,
           // Ensure that the file is shared in the channel
-          channels: [scene.channel]
+          channels: [process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL]
       });
 
       
@@ -294,8 +254,8 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
         const initialResponse = await openai.chat.completions.create({
           model: "gpt-4",
           messages: [
-              { role: "system", content: "You are a helpful assistant" },
-              { role: "user", content: `can you critique the argument in this text? the text: "${transcription.text}"` }
+              { role: "system", content: "You are a professor of Ethics and expert in AI." },
+              { role: "user", content: `can you summarize and then interpret or critique the argument present in this discussion transcript?? "${transcription.text}"` }
           ],
           max_tokens: 1000,
         });
@@ -303,7 +263,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
         const responseText = initialResponse.choices[0].message.content.trim();
 
         await client.chat.postMessage({
-          channel: scene.channel,
+          channel: process.env.SLACK_UTIL_SAVE_YOUR_TRANSCRIPTS_CHANNEL,
           text: responseText,
           thread_ts: ts,
           username: "Ethics Assistant"
@@ -335,3 +295,4 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
 };
 
 module.exports = hijackWatcher;
+
