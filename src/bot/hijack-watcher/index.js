@@ -9,30 +9,168 @@ const Replicate = require("replicate");
 const axios = require('axios');
 // const customConfig = require('../../custom/mod-hebrew');
 
+
+
+
+async function uploadImageToRainbow(client, scene, filename, imagePath, fileSizeInBytes, ts) {
+  try {
+      // Step 1: Get the upload URL
+      const uploadUrlResponse = await client.files.getUploadURLExternal({
+          channels: scene.channel,
+          filename: filename,
+          thread_ts: ts,
+          length: fileSizeInBytes,
+      });
+
+      if (!uploadUrlResponse.ok) {
+          console.error("Failed to get upload URL:", uploadUrlResponse.error);
+          return;
+      }
+
+      console.log("Upload URL obtained successfully:", uploadUrlResponse);
+
+      const uploadUrl = uploadUrlResponse.upload_url;
+      const file_id = uploadUrlResponse.file_id;
+
+      // Step 2: Upload the file content to the URL
+      const fileStream = fs.createReadStream(imagePath);
+      await axios.post(uploadUrl, fileStream, {
+          headers: {
+              'Content-Type': 'image/webp', // Adjust the content type based on the file type
+              'Content-Length': fileSizeInBytes, // Include the file size in bytes
+          },
+      });
+
+      console.log("Image content uploaded successfully to Slack's server.");
+
+      // Step 3: Complete the upload process
+      const completeUploadResponse = await client.files.completeUploadExternal({
+          files: [
+              {
+                  id: file_id,
+                  title: "Generated Image",
+              },
+          ],
+          initial_comment: "I've created this image for you",
+          channel_id: rainbowChannel,
+          thread_ts: ts,
+          channels: [rainbowChannel], // Ensure that the file is shared in the channel
+      });
+
+      if (!completeUploadResponse.ok) {
+          console.error("Failed to complete file upload:", completeUploadResponse.error);
+          return;
+      }
+
+      console.log("Image upload completed successfully:", completeUploadResponse);
+
+      // Step 4: Log file information to verify its existence
+      const fileInfoResponse = await client.files.info({
+          file: file_id,
+      });
+
+      if (!fileInfoResponse.ok) {
+          console.error("Failed to retrieve file info:", fileInfoResponse.error);
+          return;
+      }
+
+      console.log("Retrieved file info:", fileInfoResponse);
+  } catch (error) {
+      console.error("An error occurred during the file upload process:", error);
+  }
+}
+
 const customConfig = {
   scenes: [
     {
       name: "control room",
       channel: "C07QLJSM81G",
-      track: "a8k_03"
+      track: "a8k_03",
+      color: "gray",
+      // icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07R4QYTRUZ/dall__e_2024-10-07_13.58.35_-_a_retro-futuristic_control_room_represented_in_a_field_of_vibrant_flowers__with_subtle_industrial_design_elements_like_control_panels_and_screens_inte-control-room.webp?pub_secret=c073cb2c42"
     },
     {
       name: "main table",
-      channel: "C07LRH22JGN",
-      track: "a8k_01"
+      channel: "C07K2TEFQFP",
+      track: "a8k_01",
+      color: "gray",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QPAAE485/dall__e_2024-10-07_14.06.08_-_a_retro-futuristic_butcher_block_main_table_in_a_field_of_vibrant__multicolored_flowers__with_a_metal_base_and_colorful_markers__blank_paper_on_top-main-table.webp?pub_secret=6d037790f3"
     },
     {
       name: "small studio",
       channel: "C07R9CSJNG0",
-      track: "a8k_11"
+      track: "a8k_11",
+      color: "green",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QP9S0NKF/dall__e_2024-10-07_14.03.03_-_a_retro-futuristic_small_studio_setup_in_a_field_of_vibrant_flowers__with_two_microphones_subtly_placed_in_front_of_a_green_or_black_backdrop._the_des-small-studio.webp?pub_secret=913c691b70"
+    },
+    // {
+    //   name: "default",
+    //   channel: "C07K2TEFQFP",
+    //   track: "a8k_11",
+    //   color: "gray"
+    // },
+    {
+      name: "comp-lit-200-red",
+      channel: "C07QR8SAT98",
+      track: "a8k_08",
+      color: "red",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AKR886/red.webp?pub_secret=9c8372302a"
     },
     {
-      name: "default",
-      channel: "C07K2TEFQFP",
-      track: "a8k_11"
+      name: "comp-lit-200-purple",
+      channel: "C07QJM46X8E",
+      track: "a8k_06",
+      color: "purple",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06TCDDKGTE/purple.webp?pub_secret=95f7661c66"
     },
+    {
+      name: "comp-lit-200-orange",
+      channel: "C07RE2V1SDN",
+      track: "a8k_09",
+      color: "orange",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06TYNY4G5N/orange.webp?pub_secret=b8a0aec13a"
+    },
+    {
+      name: "comp-lit-200-yellow",
+      channel: "C07QNCAU8LV",
+      track: "a8k_05",
+      color: "yellow",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06SVCN5HK9/yellow.webp?pub_secret=8100e38384"
+    },
+    {
+      name: "comp-lit-200-green",
+      channel: "C07QTQ7MKFW",
+      track: "a8k_10",
+      color: "green",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06SVCR9895/green.webp?pub_secret=ac944d3bd2"
+    },
+    // {
+    //   name: "main table",
+    //   channel: "C07LRH22JGN",
+    //   track: "a8k_01",
+    //   color: "gray",
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QPAAE485/dall__e_2024-10-07_14.06.08_-_a_retro-futuristic_butcher_block_main_table_in_a_field_of_vibrant__multicolored_flowers__with_a_metal_base_and_colorful_markers__blank_paper_on_top-main-table.webp?pub_secret=6d037790f3"
+    // },
+    {
+      name: "comp-lit-200-blue",
+      channel: "C07R40FDHB3",
+      track: "a8k_07",
+      color: "blue",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AHJ5ML/blue.webp?pub_secret=a5b1b2376e"
+    },
+    // {
+    //   name: "comp-lit-200-rainbow",
+    //   channel: "C07RE3C3FQQ",
+    //   track: "a8k_11",
+    //   color: "rainbow"
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QUJRQQLU/dall__e_2024-10-07_13.53.48_-_a_retro-futuristic_computer_in_a_field_of_colorful_wildflowers_inspired_by_rainbow_hues__with_sleek_rounded_edges_and_a_subtle_rainbow_reflection_on_i-rainbow.webp?pub_secret=14aa4b557e"
+    // },
   ]
 };
+
+const rainbowChannel = "C07RE3C3FQQ"
+
+
 
 const handleFile = (filePath) => {
   const fileName = path.basename(filePath, path.extname(filePath)); // Extract the file name without extension
@@ -149,8 +287,15 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           channel: scene.channel,
           text: `${transcription.text}`,
           username: scene.name,
+          icon_url: scene.icon ? scene.icon : null
         });
 
+        const rainbowResult =  await client.chat.postMessage({
+          channel: rainbowChannel,
+          text: `${transcription.text}`,
+          username: scene.name,
+          icon_url: scene.icon ? scene.icon : null
+        });
 
 
           
@@ -165,7 +310,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           model: "gpt-4",
           messages: [
               { role: "system", content: "You are a helpful assistant." },
-              { role: "user", content: `Please give me a prompt for stable diffusion that would be the best hero image for the following conversation transcript:\n\n"${transcription.text}". Please return ONLY THE PROMPT-nothing else` }
+              { role: "user", content: `Please briefly describe what would be the best image to accompany a blog post or social post about the following conversation transcript:\n\n"${transcription.text}".` }
           ],
           max_tokens: 200,
         });
@@ -272,7 +417,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           return;
         }
 
-        console.log("Image upload completed successfully:", completeUploadResponse);
+        llog.blue("Image upload completed successfully:", completeUploadResponse);
 
         // Step 4: Log file information to verify its existence
         const fileInfoResponse = await client.files.info({
@@ -287,6 +432,11 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
         console.log("Retrieved file info:", fileInfoResponse);
 
 
+        const rainbowImageResult = await uploadImageToRainbow(client, scene, filename, imagePath, fileSizeInBytes, rainbowResult.ts)
+
+
+
+
 
 
 
@@ -295,7 +445,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           model: "gpt-4",
           messages: [
               { role: "system", content: "You are a helpful assistant" },
-              { role: "user", content: `can you critique the argument in this text? the text: "${transcription.text}"` }
+              { role: "user", content: `can you please translate this into german and then offer a Marxist elaboration on it?: "${transcription.text}"` }
           ],
           max_tokens: 1000,
         });
@@ -306,7 +456,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           channel: scene.channel,
           text: responseText,
           thread_ts: ts,
-          username: "Ethics Assistant"
+          username: "German Translator"
         });
 
 
