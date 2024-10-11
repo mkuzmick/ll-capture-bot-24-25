@@ -82,26 +82,26 @@ async function uploadImageToRainbow(client, scene, filename, imagePath, fileSize
 
 const customConfig = {
   scenes: [
+    // {
+    //   name: "control room",
+    //   channel: "C07QLJSM81G",
+    //   track: "a8k_03",
+    //   color: "gray",
+    //   // icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07R4QYTRUZ/dall__e_2024-10-07_13.58.35_-_a_retro-futuristic_control_room_represented_in_a_field_of_vibrant_flowers__with_subtle_industrial_design_elements_like_control_panels_and_screens_inte-control-room.webp?pub_secret=c073cb2c42"
+    // },
     {
-      name: "control room",
-      channel: "C07QLJSM81G",
-      track: "a8k_03",
-      color: "gray",
-      // icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07R4QYTRUZ/dall__e_2024-10-07_13.58.35_-_a_retro-futuristic_control_room_represented_in_a_field_of_vibrant_flowers__with_subtle_industrial_design_elements_like_control_panels_and_screens_inte-control-room.webp?pub_secret=c073cb2c42"
-    },
-    {
-      name: "main table",
-      channel: "C07K2TEFQFP",
+      name: "blue_01",
+      channel: "C07R40FDHB3",
       track: "a8k_01",
-      color: "gray",
-      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QPAAE485/dall__e_2024-10-07_14.06.08_-_a_retro-futuristic_butcher_block_main_table_in_a_field_of_vibrant__multicolored_flowers__with_a_metal_base_and_colorful_markers__blank_paper_on_top-main-table.webp?pub_secret=6d037790f3"
+      color: "blue",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AHJ5ML/blue.webp?pub_secret=a5b1b2376e"
     },
     {
-      name: "small studio",
-      channel: "C07R9CSJNG0",
-      track: "a8k_11",
-      color: "green",
-      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QP9S0NKF/dall__e_2024-10-07_14.03.03_-_a_retro-futuristic_small_studio_setup_in_a_field_of_vibrant_flowers__with_two_microphones_subtly_placed_in_front_of_a_green_or_black_backdrop._the_des-small-studio.webp?pub_secret=913c691b70"
+      name: "blue_02",
+      channel: "C07R40FDHB3",
+      track: "a8k_02",
+      color: "blue",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AHJ5ML/blue.webp?pub_secret=a5b1b2376e"
     },
     // {
     //   name: "default",
@@ -445,7 +445,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           model: "gpt-4",
           messages: [
               { role: "system", content: "You are a helpful assistant" },
-              { role: "user", content: `can you please translate this into german and then offer a Marxist elaboration on it?: "${transcription.text}"` }
+              { role: "user", content: `can you please summarize this into a short paragraph followed by 2 or 3 key ideas: "${transcription.text}"` }
           ],
           max_tokens: 1000,
         });
@@ -456,7 +456,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           channel: scene.channel,
           text: responseText,
           thread_ts: ts,
-          username: "German Translator"
+          username: "Summarizer"
         });
 
 
