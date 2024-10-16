@@ -10,7 +10,6 @@ const axios = require('axios');
 // const customConfig = require('../../custom/mod-hebrew');
 
 
-const rainbowChannel = "C07RE3C3FQQ"
 
 
 async function uploadImageToRainbow(client, scene, filename, imagePath, fileSizeInBytes, ts) {
@@ -88,21 +87,21 @@ const customConfig = {
       channel: "C07QLJSM81G",
       track: "a8k_03",
       color: "gray",
-      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AKR886/red.webp?pub_secret=9c8372302a"
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07RSHQ9LPR/control_room.webp?pub_secret=b93480f1b9"
     },
     {
       name: "main table",
       channel: "C07K2TEFQFP",
       track: "a8k_01",
       color: "gray",
-      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07SKQ0TGU9/main_table.webp?pub_secret=48fa3168df"
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QPAAE485/dall__e_2024-10-07_14.06.08_-_a_retro-futuristic_butcher_block_main_table_in_a_field_of_vibrant__multicolored_flowers__with_a_metal_base_and_colorful_markers__blank_paper_on_top-main-table.webp?pub_secret=6d037790f3"
     },
     {
       name: "small studio",
       channel: "C07R9CSJNG0",
       track: "a8k_11",
       color: "green",
-      // icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QP9S0NKF/dall__e_2024-10-07_14.03.03_-_a_retro-futuristic_small_studio_setup_in_a_field_of_vibrant_flowers__with_two_microphones_subtly_placed_in_front_of_a_green_or_black_backdrop._the_des-small-studio.webp?pub_secret=913c691b70"
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QP9S0NKF/dall__e_2024-10-07_14.03.03_-_a_retro-futuristic_small_studio_setup_in_a_field_of_vibrant_flowers__with_two_microphones_subtly_placed_in_front_of_a_green_or_black_backdrop._the_des-small-studio.webp?pub_secret=913c691b70"
     },
     // {
     //   name: "default",
@@ -168,6 +167,8 @@ const customConfig = {
     // },
   ]
 };
+
+const rainbowChannel = "C07RE3C3FQQ"
 
 
 
@@ -457,6 +458,11 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           thread_ts: ts,
           username: "German Translator"
         });
+
+
+
+
+
 
         let stop = new Date().getTime();
         let durationInMilliseconds = stop - start;
