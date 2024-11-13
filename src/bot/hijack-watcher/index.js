@@ -368,7 +368,121 @@ const gened1145Config = {
   ]
 };
 
-const customConfig = designLabConfig;
+
+
+const ts280config = {
+  scenes: [
+    {
+      name: "The Control Room",
+      channel: "C07QLJSM81G",
+      track: "a8k_03",
+      color: "gray",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AKR886/red.webp?pub_secret=9c8372302a"
+    },
+    {
+      name: "main table 1",
+      channel: "C07R9CSJNG0",
+      track: "a8k_09",
+      color: "gray",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07SKQ0TGU9/main_table.webp?pub_secret=48fa3168df"
+    },
+    {
+      name: "main table 2",
+      channel: "C07R9CSJNG0",
+      track: "a8k_10",
+      color: "gray",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07SKQ0TGU9/main_table.webp?pub_secret=48fa3168df"
+    },
+    
+    {
+      name: "Small Studio",
+      channel: "C07R9CSJNG0",
+      track: "a8k_05",
+      color: "green",
+      // icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QP9S0NKF/dall__e_2024-10-07_14.03.03_-_a_retro-futuristic_small_studio_setup_in_a_field_of_vibrant_flowers__with_two_microphones_subtly_placed_in_front_of_a_green_or_black_backdrop._the_des-small-studio.webp?pub_secret=913c691b70"
+    },
+    // {
+    //   name: "default",
+    //   channel: "C07K2TEFQFP",
+    //   track: "a8k_11",
+    //   color: "gray"
+    // },
+    {
+      name: "Red",
+      channel: "C0812BP0AL9",
+      track: "a8k_08",
+      color: "red",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AKR886/red.webp?pub_secret=9c8372302a"
+    },
+    {
+      name: "Purple",
+      channel: "C0812BP0AL9",
+      track: "a8k_07",
+      color: "purple",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06TCDDKGTE/purple.webp?pub_secret=95f7661c66"
+    },
+    {
+      name: "Presenter",
+      channel: "C0812BP0AL9",
+      track: "a8k_12",
+      color: "purple",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AHJ5ML/blue.webp?pub_secret=a5b1b2376e"
+    },
+    // {
+    //   name: "comp-lit-200-orange",
+    //   channel: "C07RE2V1SDN",
+    //   track: "a8k_09",
+    //   color: "orange",
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06TYNY4G5N/orange.webp?pub_secret=b8a0aec13a"
+    // },
+    // {
+    //   name: "comp-lit-200-yellow",
+    //   channel: "C07QNCAU8LV",
+    //   track: "a8k_05",
+    //   color: "yellow",
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06SVCN5HK9/yellow.webp?pub_secret=8100e38384"
+    // },
+    // {
+    //   name: "comp-lit-200-green",
+    //   channel: "C07QTQ7MKFW",
+    //   track: "a8k_10",
+    //   color: "green",
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06SVCR9895/green.webp?pub_secret=ac944d3bd2"
+    // },
+    // {
+    //   name: "main table",
+    //   channel: "C07LRH22JGN",
+    //   track: "a8k_01",
+    //   color: "gray",
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QPAAE485/dall__e_2024-10-07_14.06.08_-_a_retro-futuristic_butcher_block_main_table_in_a_field_of_vibrant__multicolored_flowers__with_a_metal_base_and_colorful_markers__blank_paper_on_top-main-table.webp?pub_secret=6d037790f3"
+    // },
+    // {
+    //   name: "comp-lit-200-blue",
+    //   channel: "C07R40FDHB3",
+    //   track: "a8k_07",
+    //   color: "blue",
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AHJ5ML/blue.webp?pub_secret=a5b1b2376e"
+    // },
+    // {
+    //   name: "comp-lit-200-rainbow",
+    //   channel: "C07RE3C3FQQ",
+    //   track: "a8k_11",
+    //   color: "rainbow"
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QUJRQQLU/dall__e_2024-10-07_13.53.48_-_a_retro-futuristic_computer_in_a_field_of_colorful_wildflowers_inspired_by_rainbow_hues__with_sleek_rounded_edges_and_a_subtle_rainbow_reflection_on_i-rainbow.webp?pub_secret=14aa4b557e"
+    // },
+  ]
+};
+
+
+
+
+
+const customConfig = ts280config;
+
+
+
+
+
 
 const handleFile = (filePath) => {
   const fileName = path.basename(filePath, path.extname(filePath)); // Extract the file name without extension
@@ -600,7 +714,7 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
                   title: "Generated Image"
               }
           ],
-          initial_comment: "I've created this image for you",
+          // initial_comment: "I've created this image for you",
           channel_id: scene.channel,
           thread_ts: ts,
           // Ensure that the file is shared in the channel
@@ -638,44 +752,44 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
 
 
 
-        const initialResponse = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-              { role: "system", content: "You are a helpful assistant" },
-              { role: "user", content: `can you please translate this into japanese and when making stylistic choices, try to say what a dramatic Benshi might say if he were delivering this content to describe a silent film: "${transcription.text}" Return only what the Benshi would say, nothing else.` }
-          ],
-          max_tokens: 1000,
-        });
+        // const initialResponse = await openai.chat.completions.create({
+        //   model: "gpt-4",
+        //   messages: [
+        //       { role: "system", content: "You are a helpful assistant" },
+        //       { role: "user", content: `can you please translate this into japanese and when making stylistic choices, try to say what a dramatic Benshi might say if he were delivering this content to describe a silent film: "${transcription.text}" Return only what the Benshi would say, nothing else.` }
+        //   ],
+        //   max_tokens: 1000,
+        // });
 
-        const responseText = initialResponse.choices[0].message.content.trim();
+        // const responseText = initialResponse.choices[0].message.content.trim();
 
-        await client.chat.postMessage({
-          channel: scene.channel,
-          text: responseText,
-          thread_ts: ts,
-          username: "AI Benshi",
-          icon_url: "https://files.slack.com/files-pri/T0HTW3H0V-F06SVCR9895/green.webp?pub_secret=ac944d3bd2"
-        });
+        // await client.chat.postMessage({
+        //   channel: scene.channel,
+        //   text: responseText,
+        //   thread_ts: ts,
+        //   username: "AI Benshi",
+        //   icon_url: "https://files.slack.com/files-pri/T0HTW3H0V-F06SVCR9895/green.webp?pub_secret=ac944d3bd2"
+        // });
 
 
-        const response2 = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-              { role: "system", content: "You are a historian of Japanese Cinema" },
-              { role: "user", content: `Can you please translate this text, spoken by a Japanese Benshi as he described a film, and then try to analyze what the possible film might have been about and why it is significant? The film itself is lost, we have only this record of what the Benshi said: "${responseText}"` }
-          ],
-          max_tokens: 1000,
-        });
+        // const response2 = await openai.chat.completions.create({
+        //   model: "gpt-4",
+        //   messages: [
+        //       { role: "system", content: "You are a historian of Japanese Cinema" },
+        //       { role: "user", content: `Can you please translate this text, spoken by a Japanese Benshi as he described a film, and then try to analyze what the possible film might have been about and why it is significant? The film itself is lost, we have only this record of what the Benshi said: "${responseText}"` }
+        //   ],
+        //   max_tokens: 1000,
+        // });
 
-        const response2Text = response2.choices[0].message.content.trim();
+        // const response2Text = response2.choices[0].message.content.trim();
 
-        await client.chat.postMessage({
-          channel: scene.channel,
-          text: response2Text,
-          thread_ts: ts,
-          username: "English Translator",
-          icon_url: "https://files.slack.com/files-pri/T0HTW3H0V-F06TYNY4G5N/orange.webp?pub_secret=b8a0aec13a"
-        });
+        // await client.chat.postMessage({
+        //   channel: scene.channel,
+        //   text: response2Text,
+        //   thread_ts: ts,
+        //   username: "English Translator",
+        //   icon_url: "https://files.slack.com/files-pri/T0HTW3H0V-F06TYNY4G5N/orange.webp?pub_secret=b8a0aec13a"
+        // });
 
 
 
