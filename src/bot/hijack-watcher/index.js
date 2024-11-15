@@ -95,29 +95,36 @@ const designLabConfig = {
   scenes: [
     {
       name: "The Control Room",
-      channel: "C07QLJSM81G",
+      channel: "C080NBW4Y07",
       track: "a8k_03",
       color: "gray",
       icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AKR886/red.webp?pub_secret=9c8372302a"
     },
     {
       name: "main table 1",
-      channel: "C07R9CSJNG0",
+      channel: "C080NBW4Y07",
       track: "a8k_09",
       color: "gray",
       icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07SKQ0TGU9/main_table.webp?pub_secret=48fa3168df"
     },
     {
-      name: "main table 2",
-      channel: "C07R9CSJNG0",
-      track: "a8k_10",
-      color: "gray",
-      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07SKQ0TGU9/main_table.webp?pub_secret=48fa3168df"
+      name: "Presenter",
+      channel: "C080NBW4Y07",
+      track: "a8k_12",
+      color: "purple",
+      icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AHJ5ML/blue.webp?pub_secret=a5b1b2376e"
     },
+    // {
+    //   name: "main table 2",
+    //   channel: "C07R9CSJNG0",
+    //   track: "a8k_10",
+    //   color: "gray",
+    //   icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07SKQ0TGU9/main_table.webp?pub_secret=48fa3168df"
+    // },
     
     {
       name: "Small Studio",
-      channel: "C07R9CSJNG0",
+      channel: "C080NBW4Y07",
       track: "a8k_05",
       color: "green",
       // icon: "https://files.slack.com/files-pri/T0HTW3H0V-F07QP9S0NKF/dall__e_2024-10-07_14.03.03_-_a_retro-futuristic_small_studio_setup_in_a_field_of_vibrant_flowers__with_two_microphones_subtly_placed_in_front_of_a_green_or_black_backdrop._the_des-small-studio.webp?pub_secret=913c691b70"
@@ -130,14 +137,14 @@ const designLabConfig = {
     // },
     {
       name: "Red",
-      channel: "C07VB8S1PNF",
+      channel: "C080NBW4Y07",
       track: "a8k_08",
       color: "red",
       icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06T3AKR886/red.webp?pub_secret=9c8372302a"
     },
     {
       name: "Purple",
-      channel: "C07VBBB6L1Y",
+      channel: "C080NBW4Y07",
       track: "a8k_07",
       color: "purple",
       icon: "https://files.slack.com/files-pri/T0HTW3H0V-F06TCDDKGTE/purple.webp?pub_secret=95f7661c66"
@@ -477,7 +484,7 @@ const ts280config = {
 
 
 
-const customConfig = ts280config;
+const customConfig = designLabConfig;
 
 
 
@@ -622,7 +629,9 @@ const hijackWatcher = async ({ client, watchFolder, archiveFolder }) => {
           model: "gpt-4",
           messages: [
               { role: "system", content: "You are a helpful assistant." },
-              { role: "user", content: `Please briefly describe what would be the best image to accompany a blog post or social post about the following conversation transcript:\n\n"${transcription.text}".` }
+              // { role: "user", content: `Please briefly describe what would be the best image to accompany a blog post or social post about the following conversation transcript:\n\n"${transcription.text}".` }
+              { role: "user", content: `Please briefly describe what would be the best dramatic and cinematic image to advertise a netflix drama about the following conversation transcript:\n\n"${transcription.text}".` }
+
           ],
           max_tokens: 200,
         });
